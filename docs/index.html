@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KNOMI-NG for the BTT KNOMI V2</title>
+<meta name="description" content="Alternative firmware for the BTT KNOMI V2: expressive eyes, print progress and a Box Turtle screen for Klipper printers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.0.1/dist/web/install-button.js?module"></script>
+<style>
+/* One dark look, like the display itself: black glass, neon accent. */
+:root {
+  --bg: #07090b; --panel: #0f1316; --line: #1d2429; --ink: #e9eef1; --muted: #8d99a3;
+  --neon: #c6ff1a; --cyan: #00d1ff;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
+a { color: var(--neon); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 48px max(18px, env(safe-area-inset-left)) 72px; display: grid; gap: 64px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--neon); }
+h1 { font: 800 clamp(40px, 7vw, 72px)/0.98 var(--display); margin: 14px 0 18px; letter-spacing: -.025em; }
+.hero p { margin: 0; color: var(--muted); max-width: 52ch; font-size: 17px; }
+.knomi { width: min(280px, 70vw); aspect-ratio: 1; border-radius: 50%; padding: 14px;
+  background: radial-gradient(circle at 30% 25%, #2c343a, #15191c 62%);
+  box-shadow: 0 0 0 1px #2c343a, 0 0 60px -10px rgba(198, 255, 26, .25); }
+.knomi img { width: 100%; height: 100%; border-radius: 50%; display: block; background: #000; }
+h2 { font: 600 26px/1.2 var(--display); margin: 0 0 6px; }
+.lede { color: var(--muted); margin: 0 0 22px; max-width: 64ch; }
+
+.install { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: grid; gap: 22px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 0; padding: 0; list-style: none; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; gap: 4px; }
+.steps li::before { content: counter(s); font: 500 13px var(--mono); color: var(--bg); background: var(--neon); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; }
+.steps b { font-weight: 500; }
+.steps span { color: var(--muted); font-size: 14px; }
+esp-web-install-button button[slot="activate"] { font: 600 16px var(--body); background: var(--neon); color: #0b1000; border: 0; border-radius: 999px; padding: 13px 26px; cursor: pointer; }
+esp-web-install-button button[slot="activate"]:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+.note { font-size: 14px; color: var(--muted); margin: 0; }
+.warn { color: #ffb020; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px 24px; }
+figure { margin: 0; display: grid; gap: 10px; }
+figure img { width: 100%; max-width: 220px; aspect-ratio: 1; justify-self: center; }
+figcaption b { display: block; font: 600 16px var(--display); }
+figcaption span { color: var(--muted); font-size: 14px; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 22px; }
+@media (max-width: 640px) { .hero { grid-template-columns: 1fr; } .knomi { justify-self: center; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Firmware for the BTT KNOMI V2</span>
+      <h1>KNOMI-NG</h1>
+      <p>Drawn eyes that react to your printer, print progress with the model's thumbnail, and a screen for the Box Turtle. Made for Voron printers running Klipper.</p>
+    </div>
+    <div class="knomi"><img src="images/saying.png" alt="KNOMI face while printing"></div>
+  </header>
+
+  <section class="install" id="install">
+    <div>
+      <h2>Install over USB</h2>
+      <p class="lede">Works in Chrome and Edge on a desktop. Already running the stock firmware on Wi-Fi? You can <a href="https://github.com/thediymaker/voron-knomi#over-wi-fi-from-the-stock-firmware">install over Wi-Fi instead</a> and keep the stock GIFs.</p>
+    </div>
+    <ol class="steps">
+      <li><b>Plug in the KNOMI</b><span>Use a USB-C data cable. If the installer can't find it, hold the KNOMI's button while plugging in.</span></li>
+      <li><b>Click Install</b><span>Pick the KNOMI's serial port when the browser asks.</span></li>
+      <li><b>Set it up</b><span>Join the <code>KNOMI-xxxx</code> network shown on its screen and open 192.168.4.1.</span></li>
+    </ol>
+    <div>
+      <esp-web-install-button manifest="firmware/manifest.json">
+        <button slot="activate">Install KNOMI-NG</button>
+        <span slot="unsupported">Your browser can't talk to USB devices. Use Chrome or Edge on a desktop.</span>
+        <span slot="not-allowed">The installer needs a secure (https) page.</span>
+      </esp-web-install-button>
+    </div>
+    <p class="note"><span class="warn">This replaces everything on the KNOMI, including the stock GIFs.</span> You can go back to the stock firmware at any time.</p>
+  </section>
+
+  <section>
+    <h2>Screens</h2>
+    <p class="lede">Swipe between them on the KNOMI. It returns to the face on its own, or jumps to whatever needs attention.</p>
+    <div class="grid">
+      <figure><img src="images/face.png" alt=""><figcaption><b>Face</b><span>Blinks, looks around, squints while probing, and swings with the toolhead.</span></figcaption></figure>
+      <figure><img src="images/print-start.png" alt=""><figcaption><b>Print start</b><span>Your PRINT_START stages along the edge while it heats.</span></figcaption></figure>
+      <figure><img src="images/print.png" alt=""><figcaption><b>Print</b><span>Thumbnail, progress, time left and layer.</span></figcaption></figure>
+      <figure><img src="images/done.png" alt=""><figcaption><b>Done</b><span>Confetti, then the result until someone taps it.</span></figcaption></figure>
+      <figure><img src="images/lanes.png" alt=""><figcaption><b>Box Turtle</b><span>Spools around the ring; tap one to load or eject it.</span></figcaption></figure>
+      <figure><img src="images/lanes-error.png" alt=""><figcaption><b>When AFC needs help</b><span>The turtle hides and the stuck lane turns red.</span></figcaption></figure>
+      <figure><img src="images/temps.png" alt=""><figcaption><b>Temperatures</b><span>Nozzle and bed with their targets.</span></figcaption></figure>
+      <figure><img src="images/night.png" alt=""><figcaption><b>Night clock</b><span>When the printer has been idle for a while.</span></figcaption></figure>
+    </div>
+  </section>
+
+  <footer>
+    Source, settings and Klipper notes: <a href="https://github.com/thediymaker/voron-knomi">github.com/thediymaker/voron-knomi</a> · MIT license
+  </footer>
+</div>
+</body>
+</html>

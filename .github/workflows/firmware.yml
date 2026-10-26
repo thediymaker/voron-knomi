@@ -1,0 +1,97 @@
+name: Firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+
+      - name: Check the tag matches FW_VERSION
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: grep -q "FW_VERSION \"${GITHUB_REF_NAME#v}\"" src/version.h
+
+      - name: Build
+        run: |
+          pip install platformio
+          pio run -e knomiv2
+          scripts/merge_factory.sh dist/knomi-ng-factory.bin
+          cp .pio/build/knomiv2/firmware.bin dist/knomi-ng-ota.bin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: dist/*.bin
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: dist
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.bin --title "$GITHUB_REF_NAME" --generate-notes
+
+      # The web installer fetches the firmware from the Pages site itself:
+      # release downloads don't allow cross-origin requests.
+      - name: Install site
+        run: |
+          mkdir -p _site/firmware
+          cp -r docs/* _site/
+          cp dist/knomi-ng-factory.bin _site/firmware/
+          cat > _site/firmware/manifest.json <<EOF
+          {
+            "name": "KNOMI-NG",
+            "version": "${GITHUB_REF_NAME#v}",
+            "new_install_prompt_erase": true,
+            "builds": [
+              {
+                "chipFamily": "ESP32-S3",
+                "parts": [{ "path": "knomi-ng-factory.bin", "offset": 0 }]
+              }
+            ]
+          }
+          EOF
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

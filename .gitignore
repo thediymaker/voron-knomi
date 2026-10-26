@@ -1,0 +1,6 @@
+.pio/
+sim/build/
+sim/out/
+backup/
+.admin-pass
+dist/
