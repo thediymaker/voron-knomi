@@ -54,7 +54,7 @@ This is the tested path. It keeps the stock firmware's GIFs on the device, and y
 
 ### Over USB, with the web installer
 
-Open the [install page](https://thediymaker.github.io/voron-knomi/) in Chrome or Edge, plug the KNOMI into your computer and click **Install**. If it can't connect, hold the KNOMI's button while plugging in the cable. This writes the whole flash, so the stock GIFs are erased.
+Open the [install page](https://thediymaker.github.io/voron-knomi/) in Chrome or Edge, hold the KNOMI's button while plugging it into your computer, then click **Install**. The button is needed because the KNOMI's screen uses the ESP32-S3's USB pins, so the running firmware turns USB off and the installer can't switch it into flashing mode by itself. This writes the whole flash, so the stock GIFs are erased.
 
 The USB installer is newer than the Wi-Fi path and hasn't been tested on as many units yet.
 

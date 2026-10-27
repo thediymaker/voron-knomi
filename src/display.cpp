@@ -1,6 +1,7 @@
 #include "display.h"
 #include <Arduino.h>
 #include <Wire.h>
+#include "soc/usb_serial_jtag_reg.h"
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
 #include "board.h"
@@ -93,6 +94,11 @@ void display_begin() {
     ledcSetup(BL_CHANNEL, 5000, 8);
     ledcAttachPin(PIN_LCD_BL, BL_CHANNEL);
     ledcWrite(BL_CHANNEL, 0);
+    // The LCD's DC and CS lines are GPIO19/20, the S3's USB pins. After a
+    // power-on reset the USB PHY owns those pads and the panel never sees a
+    // command. A soft restart keeps the PHY setting, so this only shows up
+    // after a power cycle.
+    CLEAR_PERI_REG_MASK(USB_SERIAL_JTAG_CONF0_REG, USB_SERIAL_JTAG_USB_PAD_ENABLE);
     lcd.init();
     lcd.fillScreen(TFT_BLACK);
 
