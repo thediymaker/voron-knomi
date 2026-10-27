@@ -1,7 +1,7 @@
-// Box Turtle screen. Lanes sit on the upper half of the ring, each a segment
-// filled in its filament colour as far as the spool is full. In the middle is
-// the turtle: its shell plates are the lanes, it walks while AFC moves
-// filament and hides when AFC reports an error. Tapping a lane (or the turtle)
+// Box Turtle screen. Lanes sit on the upper half of the ring (a second unit's
+// lanes 5-8 on the lower half), each a segment filled in its filament colour
+// as far as the spool is full. In the middle is the turtle: it walks while
+// AFC moves filament and hides when AFC reports an error. Tapping a lane (or the turtle)
 // opens commands; each needs a second tap to run, and they are locked while
 // printing.
 #include <initializer_list>
@@ -15,9 +15,8 @@ namespace {
 
 const float CX = 120, CY = 120, R = 104;  // lane ring
 const int32_t RING_W = 16;
-const float TX = 120, TY = 104;           // turtle centre
+const float TX = 120, TY = 94;            // turtle centre, the same for 4 and 8 lanes
 const uint32_t SKIN = 0x7BC47F, SHELL = 0x2F5236, SHELL_RIM = 0x46774F, SHELL_DARK = 0x1E3523;
-const int MAX_SHOWN = 4;
 const int MENU = 100;
 
 lv_obj_t *canvas, *line1, *line2, *btn[2], *btn_lbl[2];
@@ -35,9 +34,16 @@ struct Action {
 Action acts[2];
 int act_count;
 
-int shown() { return S->lane_count < MAX_SHOWN ? S->lane_count : MAX_SHOWN; }
+bool buttons_up() { return sel >= 0 && act_count > 0; }
 
-float seg_deg() { return 180.0f / (shown() ? shown() : 1); }
+int shown() { return S->lane_count < MAX_LANES ? S->lane_count : MAX_LANES; }
+
+// More than 4 lanes use the whole ring, 4 per half, so the first unit stays put.
+bool full_ring() { return shown() > 4; }
+
+float seg_deg() { return full_ring() ? 45 : 180.0f / (shown() ? shown() : 1); }
+
+float lane_a0(int i) { return fmodf(180 + i * seg_deg(), 360); }
 
 bool lane_full(const Lane &L) { return L.prep || L.load || L.tool_loaded; }
 
@@ -76,7 +82,7 @@ void text_at(lv_layer_t *l, const char *t, const lv_font_t *f, float cx, float c
     d.color = lv_color_hex(c);
     d.align = LV_TEXT_ALIGN_CENTER;
     const int32_t h = lv_font_get_line_height(f);
-    lv_area_t a = {(int32_t)cx - 30, (int32_t)(cy - h / 2.0f), (int32_t)cx + 30, (int32_t)(cy + h / 2.0f)};
+    lv_area_t a = {(int32_t)cx - 22, (int32_t)(cy - h / 2.0f), (int32_t)cx + 22, (int32_t)(cy + h / 2.0f)};
     lv_draw_label(l, &d, &a);
 }
 
@@ -110,19 +116,12 @@ void draw_turtle(lv_layer_t *l, float ox, float oy) {
     // shell
     draw_rect(l, x - 54, y - 33, x + 54, y + 33, 33, SHELL_RIM);
     draw_rect(l, x - 51, y - 30, x + 51, y + 30, 30, SHELL);
-    for (int j = 0; j < 3; j++) {
-        draw_hex(l, x + (j - 1) * 25, y - 19, 10, SHELL_DARK);
-        draw_hex(l, x + (j - 1) * 25, y + 21, 10, SHELL_DARK);
-    }
-    const int n = shown();
-    const int mv = moving_lane();
-    for (int i = 0; i < n; i++) {
-        const Lane &L = S->lanes[i];
-        const float hx = x + (i - (n - 1) / 2.0f) * 25, hy = y + 1;
-        const bool hot = L.tool_loaded || i == mv || i == sel;
-        if (hot) draw_hex(l, hx, hy, 15.5f, i == sel ? 0xFFFFFF : O.accent);
-        else if (lane_full(L) && lane_dark(L)) draw_hex(l, hx, hy, 14.5f, 0x6E6E73);
-        draw_hex(l, hx, hy, 13, lane_full(L) ? lane_col(L) : SHELL_DARK);
+    // A plain 3-4-3 honeycomb; the lane colours live on the ring. Command
+    // buttons sit on the shell when they are up.
+    if (!buttons_up()) {
+        for (int j = 0; j < 4; j++) draw_hex(l, x + (j - 1.5f) * 20, y + 1, 9, SHELL_DARK);
+        for (int j = 0; j < 3; j++)
+            for (int s : {-1, 1}) draw_hex(l, x + (j - 1) * 20, y + 1 + s * 17, 9, SHELL_DARK);
     }
     if (hide) {
         // peeking out of the shell
@@ -147,7 +146,7 @@ void canvas_draw(lv_event_t *e) {
 
     for (int i = 0; i < n; i++) {
         const Lane &L = S->lanes[i];
-        const float a0 = 180 + i * seg + 3, a1 = 180 + (i + 1) * seg - 3;
+        const float a0 = lane_a0(i) + 3, a1 = lane_a0(i) + seg - 3;
         const float mid = (a0 + a1) / 2;
         if (lane_full(L)) {
             const uint32_t c = lane_col(L);
@@ -158,6 +157,10 @@ void canvas_draw(lv_event_t *e) {
         } else {
             draw_arc(l, ox + CX, oy + CY, R - RING_W / 2 + 2, 3, a0, a1, COL_DIM, LV_OPA_COVER, false);
         }
+        // The lane AFC is moving blinks.
+        if (i == mv)
+            draw_arc(l, ox + CX, oy + CY, R + 1, RING_W + 2, a0, a1, 0x000000,
+                     (lv_opa_t)(200 * (1 - pulse)), false);
         uint32_t mark = 0;
         lv_opa_t mark_opa = LV_OPA_COVER;
         if (i == err_lane) { mark = COL_RED; mark_opa = (lv_opa_t)(120 + 135 * pulse); }
@@ -165,24 +168,23 @@ void canvas_draw(lv_event_t *e) {
         else if (L.tool_loaded || i == mv) mark = O.accent;
         if (mark) draw_arc(l, ox + CX, oy + CY, R + 13, 3, a0, a1, mark, mark_opa, true);
         const float rad = mid * (float)M_PI / 180;
-        text_at(l, L.map[0] ? L.map : L.name, &lv_font_montserrat_14, ox + CX + 80 * cosf(rad),
-                oy + CY + 80 * sinf(rad), lane_full(L) ? COL_TEXT : COL_MUTED);
-    }
-
-    // Filament flowing between the spool and the turtle.
-    if (mv >= 0 && mv < n) {
-        const float mid = (180 + (mv + 0.5f) * seg) * (float)M_PI / 180;
-        const float x0 = ox + CX + (R - 12) * cosf(mid), y0 = oy + CY + (R - 12) * sinf(mid);
-        const float x1 = ox + TX, y1 = oy + TY - 10;
-        const bool out = strstr(S->afc_state, "nload") || strstr(S->afc_state, "ject");
-        const uint32_t c = lane_col(S->lanes[mv]);
-        for (int k = 0; k < 4; k++) {
-            float p = fmodf(now_ms / 900.0f + k / 4.0f, 1.0f);
-            if (out) p = 1 - p;
-            draw_circle(l, x0 + (x1 - x0) * p, y0 + (y1 - y0) * p, 4, c);
-            draw_circle(l, x0 + (x1 - x0) * p, y0 + (y1 - y0) * p, 1.5f, 0xFFFFFF);
+        const char *name = L.map[0] ? L.map : L.name;
+        if (full_ring()) {
+            // On the segment itself, in whichever colour reads on what is under it.
+            uint32_t ink = COL_MUTED;
+            if (lane_full(L)) {
+                const uint32_t c = lane_col(L);
+                const int luma = (c >> 16 & 0xFF) * 299 + (c >> 8 & 0xFF) * 587 + (c & 0xFF) * 114;
+                ink = lane_fill(L) > 0.5f && luma > 140000 ? 0x000000 : 0xFFFFFF;
+            }
+            const float rm = R - RING_W / 2.0f;  // arcs are drawn inward from R
+            text_at(l, name, &lv_font_montserrat_12, ox + CX + rm * cosf(rad), oy + CY + rm * sinf(rad), ink);
+        } else {
+            text_at(l, name, &lv_font_montserrat_14, ox + CX + 80 * cosf(rad), oy + CY + 80 * sinf(rad),
+                    lane_full(L) ? COL_TEXT : COL_MUTED);
         }
     }
+
     draw_turtle(l, ox, oy);
 }
 
@@ -220,11 +222,11 @@ void on_tile_click(lv_event_t *) {
     if (ang < 0) ang += 360;
     sel_ms = now_ms;
     armed = -1;
-    if (r > 84 && ang >= 180 && shown() > 0) {
-        const int i = (int)((ang - 180) / seg_deg());
+    if (r > 84 && (ang >= 180 || full_ring()) && shown() > 0) {
+        const int i = (int)(fmodf(ang + 180, 360) / seg_deg());
         sel = (sel == i) ? -1 : (i < shown() ? i : -1);
     } else if (fabsf(p.x - a.x1 - TX) < 56 && fabsf(p.y - a.y1 - TY) < 46) {
-        sel = sel == MENU ? -1 : MENU;
+        if (!buttons_up() || sel == MENU) sel = sel == MENU ? -1 : MENU;
     } else {
         close_sel();
     }
@@ -272,16 +274,16 @@ void lanes_build(lv_obj_t *t) {
     lv_obj_add_event_cb(canvas, canvas_draw, LV_EVENT_DRAW_MAIN, nullptr);
     lv_obj_add_event_cb(t, on_tile_click, LV_EVENT_SHORT_CLICKED, nullptr);
 
-    line1 = label(t, &lv_font_montserrat_14, COL_TEXT, LV_ALIGN_TOP_MID, 0, 148);
-    line2 = label(t, &lv_font_montserrat_12, COL_MUTED, LV_ALIGN_TOP_MID, 0, 168);
-    lv_obj_set_width(line2, 156);
+    line1 = label(t, &lv_font_montserrat_14, COL_TEXT, LV_ALIGN_TOP_MID, 0, 137);
+    line2 = label(t, &lv_font_montserrat_12, COL_MUTED, LV_ALIGN_TOP_MID, 0, 157);
+    lv_obj_set_width(line2, 140);
     lv_label_set_long_mode(line2, LV_LABEL_LONG_WRAP);
     for (int i = 0; i < 2; i++) {
         btn[i] = lv_button_create(t);
-        lv_obj_set_size(btn[i], 68, 28);
-        lv_obj_set_style_radius(btn[i], 14, 0);
+        lv_obj_set_size(btn[i], 84, 24);
+        lv_obj_set_style_radius(btn[i], 12, 0);
         lv_obj_set_style_shadow_width(btn[i], 0, 0);
-        lv_obj_set_style_bg_color(btn[i], lv_color_hex(0x2C2C2E), 0);
+        lv_obj_set_style_bg_color(btn[i], lv_color_hex(SHELL_DARK), 0);
         lv_obj_set_style_border_width(btn[i], 2, 0);
         btn_lbl[i] = label(btn[i], &lv_font_montserrat_14, COL_TEXT, LV_ALIGN_CENTER, 0, 0);
         lv_obj_add_event_cb(btn[i], on_btn, LV_EVENT_CLICKED, (void *)(intptr_t)i);
@@ -335,7 +337,7 @@ void lanes_update() {
     set_text(line1, a);
     set_text(line2, b);
     lv_obj_set_style_text_color(line2, lv_color_hex(b_col), 0);
-    lv_obj_align(line2, LV_ALIGN_TOP_MID, 0, S->afc_error && sel < 0 ? 166 : 168);
+    lv_obj_align(line2, LV_ALIGN_TOP_MID, 0, S->afc_error && sel < 0 ? 155 : 157);
 
     for (int i = 0; i < 2; i++) {
         const bool on = i < act_count && sel >= 0;
@@ -343,11 +345,12 @@ void lanes_update() {
         if (!on) continue;
         const bool arm = armed == i;
         set_text(btn_lbl[i], arm ? "Sure?" : acts[i].label);
-        lv_obj_set_style_bg_color(btn[i], lv_color_hex(arm ? O.accent : 0x2C2C2E), 0);
+        lv_obj_set_style_bg_color(btn[i], lv_color_hex(arm ? O.accent : SHELL_DARK), 0);
         lv_obj_set_style_border_color(btn[i], lv_color_hex(O.accent), 0);
         lv_obj_set_style_text_color(btn_lbl[i], lv_color_hex(arm ? 0x000000 : COL_TEXT), 0);
-        const int32_t x = act_count == 1 ? 0 : (i == 0 ? -37 : 37);
-        lv_obj_align(btn[i], LV_ALIGN_TOP_MID, x, 190);
+        // Stacked on the turtle's shell.
+        const int32_t y = TY - 12 + (act_count == 1 ? 1 : (i == 0 ? -13 : 15));
+        lv_obj_align(btn[i], LV_ALIGN_TOP_MID, 0, y);
     }
     lv_obj_invalidate(canvas);
 }

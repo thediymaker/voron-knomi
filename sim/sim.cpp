@@ -1,5 +1,6 @@
 // Desktop simulator: renders the UI for scripted printer states into
 // 240x240 PPM frames (sim/out/*.ppm); render.py turns them into PNGs.
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -209,15 +210,33 @@ int main() {
     run(500);
     snap("12-lanes-error");
 
+    // Two Box Turtles: 8 lanes, T5 loading, then T6 tapped.
+    base_state();
+    S.lane_count = 8;
+    lane(4, "T4", "ABS", 0xE5E5EA, true, 820);
+    lane(5, "T5", "ASA", 0xFF2D55, true, 640);
+    lane(6, "T6", "PLA", 0x34C759, true, 300);
+    lane(7, "T7", "", 0, false, -1);
+    ui_show_tile(3);
+    strcpy(S.afc_state, "Loading");
+    strcpy(S.afc_moving, "lane6");
+    run(500);
+    snap("12b-lanes-8");
+    strcpy(S.afc_state, "Idle");
+    strcpy(S.afc_moving, "");
+    run(200);
+    tap(120 + 96 * cosf(112.5f * 3.14159f / 180), 120 + 96 * sinf(112.5f * 3.14159f / 180));
+    snap("12c-lanes-8-T6-selected");
+
     // Tap lane T2 (upper right), arm Load, confirm it; then the turtle menu.
     base_state();
     ui_show_tile(3);
     run(300);
     tap(160, 24);
     snap("13-lanes-T2-selected");
-    tap(83, 204);
+    tap(120, 81);
     snap("13b-lanes-T2-armed");
-    tap(83, 204);
+    tap(120, 81);
     run(200);
     snap("13c-lanes-sent");
     tap(120, 104);

@@ -57,7 +57,7 @@ DOCS = {
     "saying": "v2-05-printing-saying", "print": "v2-06-print", "temps": "v2-07-temps",
     "done": "v2-08-done-confetti", "night": "v2-14-night-clock", "lanes": "v2-10-lanes-idle",
     "lanes-loading": "v2-11-lanes-loading", "lanes-error": "v2-12-lanes-error",
-    "lanes-command": "v2-13b-lanes-T2-armed", "theme-cyan": "v2-15-theme-cyan",
+    "lanes-command": "v2-13b-lanes-T2-armed", "lanes-8": "v2-12b-lanes-8", "theme-cyan": "v2-15-theme-cyan",
     "theme-magenta": "v2-16-theme-magenta-temps", "theme-amber": "v2-17-theme-amber-print",
     "idex-concept": "d-idex", "idex-mirror-concept": "e-idex-mirror",
 }

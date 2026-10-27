@@ -20,8 +20,9 @@ Swipe left and right between them. After 30 seconds without a touch the KNOMI go
 | <img src="docs/images/print.png" width="200"> | **Print.** The slicer thumbnail inside a progress ring, time left, layer and file name. |
 | <img src="docs/images/done.png" width="200"> | **Done.** Confetti, print time and filament used. It stays up until someone taps it. |
 | <img src="docs/images/temps.png" width="200"> | **Temperatures.** Nozzle and bed with their targets. |
-| <img src="docs/images/lanes.png" width="200"> | **Box Turtle.** Lanes around the top of the ring, filled in their filament colour as far as each spool is full. The turtle's shell plates are the lanes; it walks while AFC moves filament and hides when AFC reports an error. Shown only when Klipper has an AFC unit (and can be turned off). |
-| <img src="docs/images/lanes-command.png" width="200"> | **Box Turtle commands.** Tap a spool to load or eject it; tap the turtle for the unit's light, unload or reset. Every command that moves filament needs a second tap, and all of them are locked while printing. |
+| <img src="docs/images/lanes.png" width="200"> | **Box Turtle.** Lanes around the top of the ring, filled in their filament colour as far as each spool is full. The turtle walks while AFC moves filament and hides when AFC reports an error. Shown only when Klipper has an AFC unit (and can be turned off). |
+| <img src="docs/images/lanes-8.png" width="200"> | **Two Box Turtles.** Up to 8 lanes: the second unit takes the lower half of the ring. |
+| <img src="docs/images/lanes-command.png" width="200"> | **Box Turtle commands.** Tap a spool to load or eject it; tap the turtle for the unit's light, unload or reset. The buttons appear on the turtle's shell. Every command that moves filament needs a second tap, and all of them are locked while printing. |
 | <img src="docs/images/night.png" width="200"> | **Night clock.** After the printer has been idle for a while, the eyes close under a dimmed clock. |
 
 Five colour themes (Neon, Cyan, Amber, Magenta, Ice), with white or theme-coloured eyes:
@@ -36,7 +37,7 @@ Five colour themes (Neon, Cyan, Amber, Magenta, Ice), with white or theme-colour
 
 - A **BTT KNOMI V2** (the touchscreen version, ESP32-S3). The KNOMI V1 is not supported.
 - Klipper with Moonraker. The KNOMI connects to Moonraker's websocket on port 7125.
-- Optional: a Box Turtle running AFC-Klipper-Add-On 1.2 or newer.
+- Optional: a Box Turtle (or two, up to 8 lanes) running AFC-Klipper-Add-On 1.2 or newer.
 
 ## Install
 
