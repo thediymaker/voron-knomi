@@ -46,7 +46,7 @@ Five colour themes (Neon, Cyan, Amber, Magenta, Ice), with white or theme-colour
 This is the tested path. It keeps the stock firmware's GIFs on the device, and you can go back to stock the same way.
 
 1. Download `knomi-ng-ota.bin` from the [latest release](../../releases/latest).
-2. Open your KNOMI's page in a browser (its IP address, or `http://knomi.local`), click **Update FW** and upload the file. Or from a terminal:
+2. Open your KNOMI's page in a browser (its IP address), click **Update Firmware**, and on the page that opens choose `knomi-ng-ota.bin` and upload it. Or from a terminal:
    ```sh
    curl -F "MD5=$(md5sum knomi-ng-ota.bin | cut -d' ' -f1)" \
         -F "firmware=@knomi-ng-ota.bin;filename=firmware" http://<knomi-ip>/update
@@ -61,12 +61,15 @@ The USB installer is newer than the Wi-Fi path and hasn't been tested on as many
 
 ### First start
 
-KNOMI-NG tries to take over the stock firmware's Wi-Fi and Moonraker settings. If it can't (older stock versions store them differently), it opens its own setup network:
+KNOMI-NG tries to take over the stock firmware's Wi-Fi and Moonraker settings. Recent stock versions store them in a format it can't read, so expect it to open its own setup network instead:
 
 1. The screen shows a network name (`KNOMI-xxxx`) and a password that only appears there.
-2. Join that network and open `http://192.168.4.1`.
+2. Join that network from a phone or computer and open `http://192.168.4.1`.
 3. Set an admin password. Settings and updates need it from then on (user `admin`).
-4. Under **Settings**, enter your Wi-Fi network, its password and your printer's address, then save.
+4. Under **Settings**, enter your Wi-Fi network, its password and your printer's address (the machine running Moonraker), then save.
+5. The KNOMI joins your Wi-Fi. Switch back to your own network (the setup network shuts down once nothing is connected to it), then open `http://knomi.local`, or long-press the KNOMI's face to see its new IP address.
+
+If the face shows "No printer" with a question mark, check the printer address and Moonraker's `trusted_clients` (see [Klipper side](#klipper-side)).
 
 Long-press the face to see the KNOMI's IP address and version at any time.
 
